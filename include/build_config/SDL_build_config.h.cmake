@@ -94,25 +94,25 @@
 #cmakedefine HAVE_WCSTOL 1
 #cmakedefine HAVE_STRLEN 1
 #cmakedefine HAVE_STRNLEN 1
-#cmakedefine HAVE_STRLCPY 1
-#cmakedefine HAVE_STRLCAT 1
+/* #undef HAVE_STRLCPY */   /* TT: non-standard; use SDL's internal logic */
+/* #undef HAVE_STRLCAT */   /* TT: non-standard; use SDL's internal logic */
 #cmakedefine HAVE_STRPBRK 1
-#cmakedefine HAVE__STRREV 1
-#cmakedefine HAVE_INDEX 1
-#cmakedefine HAVE_RINDEX 1
+/* #undef HAVE__STRREV */   /* TT: non-standard; use SDL's internal logic */
+/* #undef HAVE_INDEX */     /* TT: non-standard; use SDL's internal logic */
+/* #undef HAVE_RINDEX */    /* TT: non-standard; use SDL's internal logic */
 #cmakedefine HAVE_STRCHR 1
 #cmakedefine HAVE_STRRCHR 1
 #cmakedefine HAVE_STRSTR 1
 #cmakedefine HAVE_STRNSTR 1
 #cmakedefine HAVE_STRTOK_R 1
-#cmakedefine HAVE_ITOA 1
-#cmakedefine HAVE__LTOA 1
-#cmakedefine HAVE__UITOA 1
-#cmakedefine HAVE__ULTOA 1
+/* #undef HAVE_ITOA */      /* TT: non-standard; triggers UCRT warnings; use SDL's internal logic */
+/* #undef HAVE__LTOA */     /* TT: non-standard; triggers UCRT warnings; use SDL's internal logic */
+/* #undef HAVE__UITOA */    /* TT: non-standard; triggers UCRT warnings; use SDL's internal logic */
+/* #undef HAVE__ULTOA */    /* TT: non-standard; triggers UCRT warnings; use SDL's internal logic */
 #cmakedefine HAVE_STRTOL 1
 #cmakedefine HAVE_STRTOUL 1
-#cmakedefine HAVE__I64TOA 1
-#cmakedefine HAVE__UI64TOA 1
+/* #undef HAVE__I64TOA */   /* TT: non-standard; triggers UCRT warnings */
+/* #undef HAVE__UI64TOA */  /* TT: non-standard; triggers UCRT warnings */
 #cmakedefine HAVE_STRTOLL 1
 #cmakedefine HAVE_STRTOULL 1
 #cmakedefine HAVE_STRTOD 1

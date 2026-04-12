@@ -532,6 +532,9 @@ if (LIBC_IS_GLIBC AND CMAKE_SIZEOF_VOID_P EQUAL 4)
   sdl_compile_definitions(PRIVATE "_TIME_BITS=64")
 endif()
 
+# TT: MSVC does not like --version-script (clang-cl on windows)
+if(NOT (MSVC OR CMAKE_C_SIMULATE_ID STREQUAL "MSVC"))
+
 check_linker_supports_version_file(HAVE_WL_VERSION_SCRIPT)
 if(HAVE_WL_VERSION_SCRIPT)
   sdl_shared_link_options("-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/src/dynapi/SDL_dynapi.sym")
@@ -542,6 +545,9 @@ else()
    if(((LINUX AND LIBC_IS_GLIBC) OR ANDROID) AND (NOT USE_TCC))
     message(FATAL_ERROR "Linker does not support '-Wl,--version-script=xxx.sym'. This is required on the current host platform (${SDL_CMAKE_PLATFORM}).")
   endif()
+endif()
+
+# TT: MSVC does not like --version-script (clang-cl on windows)
 endif()
 
 if(CYGWIN)
@@ -679,11 +685,19 @@ if(USE_GCC OR USE_CLANG OR USE_INTELCC OR USE_QCC)
 
   if(NOT OPENBSD)
     cmake_push_check_state()
+
+    # TT: MSVC does not like --no-undefined (clang-cl on windows)
+    if(NOT (MSVC OR CMAKE_C_SIMULATE_ID STREQUAL "MSVC"))
+
     check_linker_flag(C "-Wl,--no-undefined" LINKER_SUPPORTS_WL_NO_UNDEFINED)
     #FIXME: originally this if had an additional "AND NOT (USE_CLANG AND WINDOWS)"
     if(LINKER_SUPPORTS_WL_NO_UNDEFINED)
       sdl_shared_link_options("-Wl,--no-undefined")
     endif()
+
+    # TT: MSVC does not like --no-undefined (clang-cl on windows)
+    endif()
+
   endif()
 endif()
 
