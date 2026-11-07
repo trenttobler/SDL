@@ -6941,12 +6941,16 @@ static bool D3D12_INTERNAL_ResizeSwapchain(
         SDL_free(windowData->textureContainers[i].textures);
     }
 
+    int windowWidth = 0;
+    int windowHeight = 0;
+    SDL_GetWindowSizeInPixels(windowData->window, &windowWidth, &windowHeight);
+
     // Resize the swapchain
     HRESULT res = IDXGISwapChain_ResizeBuffers(
         windowData->swapchain,
         0, // Keep buffer count the same
-        0, // use client window width
-        0, // use client window height
+        (UINT)SDL_max(windowWidth, 0),
+        (UINT)SDL_max(windowHeight, 0),
         DXGI_FORMAT_UNKNOWN, // Keep the old format
         renderer->supportsTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0);
     CHECK_D3D12_ERROR_AND_RETURN("Could not resize swapchain buffers", false);
@@ -7022,8 +7026,11 @@ static bool D3D12_INTERNAL_CreateSwapchain(
     windowData->swapchainTextureCount = SDL_clamp(renderer->allowedFramesInFlight, 2, 3);
 
     // Initialize the swapchain buffer descriptor
-    swapchainDesc.Width = 0;  // use client window width
-    swapchainDesc.Height = 0; // use client window height
+    int windowWidth = 0;
+    int windowHeight = 0;
+    SDL_GetWindowSizeInPixels(windowData->window, &windowWidth, &windowHeight);
+    swapchainDesc.Width = (UINT)SDL_max(windowWidth, 0);
+    swapchainDesc.Height = (UINT)SDL_max(windowHeight, 0);
     swapchainDesc.Format = swapchainFormat;
     swapchainDesc.SampleDesc.Count = 1;
     swapchainDesc.SampleDesc.Quality = 0;
@@ -7626,6 +7633,10 @@ static bool D3D12_INTERNAL_AcquireSwapchainTexture(
     windowData = D3D12_INTERNAL_FetchWindowData(window);
     if (windowData == NULL) {
         SET_STRING_ERROR_AND_RETURN("Cannot acquire swapchain texture from an unclaimed window!", false);
+    }
+
+    if (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) {
+        return true;
     }
 
     if (windowData->needsSwapchainRecreate) {
