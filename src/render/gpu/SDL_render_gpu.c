@@ -96,6 +96,7 @@ typedef struct GPU_RenderData
         Uint32 width;
         Uint32 height;
     } backbuffer;
+    bool pixel_size_changed;
 
     struct
     {
@@ -153,6 +154,34 @@ typedef struct GPU_TextureData
     SDL_GPUTexture *textureNV;
 #endif
 } GPU_TextureData;
+
+static bool CreateBackbuffer(GPU_RenderData *data, Uint32 w, Uint32 h, SDL_GPUTextureFormat fmt);
+
+static void GPU_WindowEvent(SDL_Renderer *renderer, const SDL_WindowEvent *event)
+{
+    GPU_RenderData *data = (GPU_RenderData *)renderer->internal;
+
+    if (event->type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
+        data->pixel_size_changed = true;
+    }
+}
+
+static bool UpdateBackbufferForWindowSize(SDL_Renderer *renderer)
+{
+    GPU_RenderData *data = (GPU_RenderData *)renderer->internal;
+    int w = 0, h = 0;
+
+    if (!SDL_GetWindowSizeInPixels(renderer->window, &w, &h) || w <= 0 || h <= 0) {
+        return true;
+    }
+    if ((Uint32)w != data->backbuffer.width || (Uint32)h != data->backbuffer.height) {
+        if (!CreateBackbuffer(data, (Uint32)w, (Uint32)h, SDL_GetGPUSwapchainTextureFormat(data->device, renderer->window))) {
+            return false;
+        }
+    }
+    data->pixel_size_changed = false;
+    return true;
+}
 
 static bool GPU_SupportsBlendMode(SDL_Renderer *renderer, SDL_BlendMode blendMode)
 {
@@ -1169,6 +1198,12 @@ static bool GPU_RunCommandQueue(SDL_Renderer *renderer, SDL_RenderCommand *cmd, 
 {
     GPU_RenderData *data = (GPU_RenderData *)renderer->internal;
 
+    if (data->pixel_size_changed && renderer->window) {
+        if (!UpdateBackbufferForWindowSize(renderer)) {
+            return false;
+        }
+    }
+
     if (!UploadVertices(data, vertices, vertsize)) {
         return false;
     }
@@ -1482,16 +1517,17 @@ static bool CreateBackbuffer(GPU_RenderData *data, Uint32 w, Uint32 h, SDL_GPUTe
     tci.sample_count = SDL_GPU_SAMPLECOUNT_1;
     tci.usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER;
 
+    SDL_GPUTexture *texture = SDL_CreateGPUTexture(data->device, &tci);
+    if (!texture) {
+        return false;
+    }
+
     SDL_ReleaseGPUTexture(data->device, data->backbuffer.texture);
 
-    data->backbuffer.texture = SDL_CreateGPUTexture(data->device, &tci);
+    data->backbuffer.texture = texture;
     data->backbuffer.width = w;
     data->backbuffer.height = h;
     data->backbuffer.format = fmt;
-
-    if (!data->backbuffer.texture) {
-        return false;
-    }
 
     return true;
 }
@@ -1711,6 +1747,7 @@ static bool GPU_CreateRenderer(SDL_Renderer *renderer, SDL_Window *window, SDL_P
         return false;
     }
 
+    renderer->WindowEvent = GPU_WindowEvent;
     renderer->SupportsBlendMode = GPU_SupportsBlendMode;
     renderer->CreatePalette = GPU_CreatePalette;
     renderer->UpdatePalette = GPU_UpdatePalette;
